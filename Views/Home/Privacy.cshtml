@@ -1,0 +1,93 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Ana Layout kullanılıyor
+}
+
+<h1>Hoşgeldiniz!</h1>
+<p>Kuaför Uygulamasına Hoşgeldiniz. Randevu alabilir ve saç modeli önerisi alabilirsiniz.</p>
+
+<h2>Fotoğraf Yükleyerek Saç Modeli Önerisi Al</h2>
+<div class="mt-4">
+    <input type="file" id="imageInput" accept="image/*" />
+    <label for="hairStyleSelect" class="mt-2">Saç Stili Seçin:</label>
+    <select id="hairStyleSelect" class="form-control mt-2">
+        <option value="">Bir saç stili seçin...</option>
+        <option value="101">Saç Stili 101</option>
+        <option value="201">Saç Stili 201</option>
+        <option value="301">Saç Stili 301</option>
+        <!-- Diğer saç stillerini buraya ekleyebilirsiniz -->
+    </select>
+    <button id="uploadButton" class="btn btn-secondary mt-2">Fotoğraf Yükle</button>
+</div>
+<div id="uploadedImage" class="mt-4"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#uploadButton").click(function (e) {
+            e.preventDefault(); // Sayfa yenilenmesini engelle
+
+            const fileInput = $("#imageInput")[0]; // Fotoğraf input öğesini alıyoruz
+            const file = fileInput.files[0]; // Seçilen dosyayı alıyoruz
+            const hairStyle = $("#hairStyleSelect").val(); // Seçilen saç stilini alıyoruz
+
+            // Eğer dosya veya stil seçilmemişse, kullanıcıya uyarı göster
+            if (!file) {
+                alert("Lütfen bir fotoğraf seçin!");
+                return;
+            }
+
+            if (!hairStyle) {
+                alert("Lütfen bir saç stili seçin!");
+                return;
+            }
+
+            const data = new FormData();
+            data.append("image_target", file); // Seçilen dosyayı FormData'ya ekliyoruz
+            data.append("hair_type", hairStyle); // Seçilen saç stilini ekliyoruz
+
+            $.ajax({
+                url: "https://hairstyle-changer.p.rapidapi.com/huoshan/facebody/hairstyle", // API URL
+                method: "POST", // Veri gönderme metodu
+                headers: {
+                    'x-rapidapi-key': 'ce85151a36msh03e8e081e10c536p1a2a32jsn9e6fedbb19b3', // API anahtarınız
+                    'x-rapidapi-host': 'hairstyle-changer.p.rapidapi.com', // API host
+                },
+                processData: false, // FormData'nın işlenmemesi gerektiğini belirtir
+                contentType: false, // İçerik türünü otomatik olarak ayarlama
+                data: data, // Gönderilecek veri
+                success: function (response) {
+                    if (response && response.data && response.data.image) {
+                        const base64Image = response.data.image; // Base64 encoded resim verisi
+                        const imgElement = document.createElement("img"); // Yeni bir <img> element oluştur
+
+                        imgElement.src = `data:image/jpeg;base64,${base64Image}`;
+                        imgElement.className = "img-thumbnail"; // Resme thumbnail stili ver
+                        imgElement.style.width = "100%"; // Resmin genişliğini %100 yap
+                        imgElement.style.height = "auto"; // Yüksekliği orantılı ayarla
+                        imgElement.style.marginTop = "20px"; // Üst boşluk ekle
+
+                        $("#uploadedImage").html(imgElement); // Yüklenen resmi ekranda göster
+                    } else {
+                        alert("API'den beklenmeyen bir yanıt alındı.");
+                    }
+                },
+                error: function (xhr) {
+                    let errorMessage = "Bir hata oluştu. Lütfen tekrar deneyin.";
+
+                    if (xhr.status === 403) {
+                        errorMessage = "Erişim reddedildi. Lütfen API anahtarınızı kontrol edin.";
+                    } else if (xhr.status === 404) {
+                        errorMessage = "API adresi bulunamadı. Lütfen URL'yi kontrol edin.";
+                    } else if (xhr.status === 429) {
+                        errorMessage = "Kota sınırına ulaştınız. Lütfen daha sonra tekrar deneyin.";
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message; // Hata mesajını API'den alınan yanıtla güncelle
+                    }
+
+                    alert(errorMessage);
+                    console.error("Error:", xhr.status, xhr.responseText);
+                },
+            });
+        });
+    });
+</script>

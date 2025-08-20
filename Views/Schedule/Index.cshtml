@@ -1,0 +1,42 @@
+﻿@model IEnumerable<BarberShop.Models.Appointment>
+
+<h2 class="my-4">Pending Appointment Approvals</h2>
+
+<table class="table table-striped table-bordered">
+    <thead class="thead-dark">
+        <tr>
+            <th>Start</th>
+            <th>End</th>
+            <th>Service</th>
+            <th>Price</th>
+            <th>Duration (min)</th>
+            <th>Stylist</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var appointment in Model)
+        {
+            <tr>
+                <td>@appointment.StartDate.ToString("dd MMM yyyy HH:mm")</td>
+                <td>@appointment.EndDate.ToString("HH:mm")</td>
+                <td>@appointment.Service</td>
+                <td>@string.Format("{0:C}", appointment.Price)</td>
+                <td>@appointment.Duration</td>
+                <td>@appointment.Stylist?.UserName ?? "Unknown"</td>
+                <td class="text-center">
+                    <!-- Confirm Button -->
+                    <form asp-action="ConfirmAppointment" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@appointment.Id" />
+                        <button type="submit" class="btn btn-success btn-sm">Confirm</button>
+                    </form>
+                    <!-- Reject Button -->
+                    <form asp-action="RejectAppointment" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@appointment.Id" />
+                        <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
